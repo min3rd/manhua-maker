@@ -13,18 +13,20 @@ audio_service = AudioService()
 json_service = JsonService()
 tts_service = TTSService()
 json_string = json_service.get_json_string_from_file(f"json/{filename}.json")
-data = json.loads(
+data: SpeechRecognitionResult = json.loads(
     json_string,
     object_hook=SpeechRecognitionResult,
 )
 
 for segment in data.segments:
+    print(f"Translating segment {segment.id}")
     translated_text = translate_service.argostranslate(
         text=segment.text, from_code=from_code, to_code=to_code
     )
     if not translated_text or len(translated_text) <= 0:
         data.segments.remove(segment)
         continue
+    print(f"Saving audio for segment {segment.id} with text: {translated_text}")
     segment_audio_path = f"audios/{segment.id}.mp3"
     tts_service.to_file(translated_text, segment_audio_path, lang=to_code)
     segment.audio_path = segment_audio_path

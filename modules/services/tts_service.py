@@ -8,7 +8,12 @@ class TTSService(metaclass=Singleton):
     engine = pyttsx3.init()
 
     def __init__(self):
-        self.engine.setProperty("rate", 125)
+        self.engine.setProperty("rate", 200)
+        voices = self.engine.getProperty("voices")
+        for voice in voices:
+            if f"{voice.id}".upper().find("ZIRA"):
+                self.engine.setProperty("voice", voice.id)
+                break
 
     def to_file(self, text: str, file_path: str, lang: str = "en", tld: str = "us"):
         if self.use_gtts:
