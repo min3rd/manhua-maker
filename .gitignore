@@ -4,3 +4,4 @@ texts
 json
 export
 *__pycache__*
+*.argosmodel
