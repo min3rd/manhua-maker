@@ -21,7 +21,7 @@ class AudioService(metaclass=Singleton):
         background_audio_path: str,
         segments: list[Segment],
         output_path: str,
-        word_limit: int = 10,
+        word_limit: int = 5,
     ):
         print("Concatenating audios")
         video = mp.VideoFileClip(video_path)
@@ -46,7 +46,7 @@ class AudioService(metaclass=Singleton):
                 background_audio_clip = background_audio_clip.fx(
                     vfx.speedx, background_audio_clip.duration / segment_audio.duration
                 )
-                background_audio_clip = afx.volumex(background_audio_clip, 0.3)
+                background_audio_clip = afx.volumex(background_audio_clip, 0.1)
                 composite_audio = mp.CompositeAudioClip(
                     [background_audio_clip, segment_audio]
                 )
@@ -97,7 +97,7 @@ class AudioService(metaclass=Singleton):
             ),
         )
         video = mp.CompositeVideoClip(
-            [video, subtitle_clip.set_position(("right", "bottom"))]
+            [video, subtitle_clip.set_position(("center", "bottom"))]
         )
         video.write_videofile(output_path, codec="libx264")
 
