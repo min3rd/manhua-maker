@@ -9,3 +9,5 @@ argostranslate==1.9.6
 gTTS==2.5.3
 translate==3.6.1
 pyttsx3==2.98
+google-api-python-client==2.149.0
+oauth2client==4.1.3
