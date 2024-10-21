@@ -3,6 +3,8 @@ from modules.core.singleton import Singleton
 import argostranslate.package
 import argostranslate.translate
 
+FOLDER_PATH_MODELS = "models"
+
 
 class TranslateService(metaclass=Singleton):
     from_code: str
@@ -24,7 +26,9 @@ class TranslateService(metaclass=Singleton):
             if self.from_code is not from_code or self.to_code is not to_code:
                 self.from_code = from_code
                 self.to_code = to_code
-                self.translator = Translator(from_lang=from_code, to_lang=to_code)
+                argostranslate.package.install_from_path(
+                    f"{FOLDER_PATH_MODELS}/{from_code}_{to_code}.argosmodel"
+                )
         return argostranslate.translate.translate(text, from_code, to_code)
 
     def translate(self, text: str, from_code: str = None, to_code: str = None) -> str:

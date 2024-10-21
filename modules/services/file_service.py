@@ -1,3 +1,4 @@
+import shutil
 from modules.core.singleton import Singleton
 import os
 
@@ -32,3 +33,14 @@ class FileService(metaclass=Singleton):
         except Exception as e:
             print(f"Error moving file: {e}")
             return False
+
+    def copy(self, src: str, dst: str):
+        try:
+            shutil.copy(src, dst)
+            return True
+        except Exception as e:
+            print(f"Error copying file: {e}")
+            return False
+
+    def get_folder_path(self, file_path: str) -> str:
+        return os.path.dirname(file_path)

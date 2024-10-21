@@ -5,6 +5,15 @@
             "request": "launch",
             "name": "Launch App",
             "program": "${workspaceFolder}/app.py"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch Test",
+            "program": "${workspaceFolder}/test.py",
+            "args": [
+                "test"
+            ]
         }
     ],
 }

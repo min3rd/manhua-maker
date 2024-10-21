@@ -19,8 +19,11 @@ class JsonService(metaclass=Singleton):
         return json.loads(json_str, object_hook=lambda d: cls(**d))
 
     def to_object_from_file(self, file_path: str, cls: type):
-        with open(file_path, "r", encoding="utf-8") as f:
-            return self.to_object(f.read(), cls)
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return self.to_object(f.read(), cls)
+        except FileNotFoundError:
+            return None
 
     def get_json_string_from_file(self, file_path: str):
         with open(file_path, "r", encoding="utf-8") as f:
