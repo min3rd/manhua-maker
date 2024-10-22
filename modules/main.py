@@ -22,6 +22,11 @@ FOLDER_PATH_VIDEOS = "videos"
 FILE_PATH_CONFIG = "config.json"
 DATA_FOLDERS = [FOLDER_PATH_AUDIOS, FOLDER_PATH_JSON]
 COMPLETED_FOLDER = [FOLDER_PATH_DONE, FOLDER_PATH_EXPORT]
+MENU_TRANSLATE_VIDEO = "Translate video"
+MENU_SPLIT_VIDEO = "Split video"
+MENU_UPLOAD = "Upload"
+MENU_SETTINGS = "Settings"
+MENU_EXIT = "Exit"
 
 
 class Config:
@@ -67,17 +72,17 @@ class Main:
 
     def run(self):
         answer = self.menu_main()
-        if "Translate video" in answer["menu"]:
+        if MENU_TRANSLATE_VIDEO == answer["menu"]:
             self.make_all_video(self.config.from_code, self.config.to_code)
-        if "Split video" in answer["menu"]:
+        if MENU_SPLIT_VIDEO == answer["menu"]:
             self.split_video(self.config.video_length)
-        if "Upload" in answer["menu"]:
+        if MENU_UPLOAD == answer["menu"]:
             print("Uploading")
             self.upload()
-        if "Settings" in answer["menu"]:
-            print("Settings")
+        if MENU_SETTINGS == answer["menu"]:
+            print(MENU_SETTINGS)
             self.settings()
-        if "Exit" in answer["menu"]:
+        if MENU_EXIT == answer["menu"]:
             print("Exiting")
             return
         self.run()
@@ -94,7 +99,9 @@ class Main:
         )
 
     def menu_main(self):
-        return self.menu(["Translate video", "Split video", "Settings", "Exit"])
+        return self.menu(
+            [MENU_TRANSLATE_VIDEO, MENU_SPLIT_VIDEO, MENU_SETTINGS, MENU_EXIT]
+        )
 
     def menu_upload(self, video_paths: list[str]):
         return self.menu(video_paths)
@@ -115,9 +122,8 @@ class Main:
         video_paths = self.file_service.find_all_videos(FOLDER_PATH_VIDEOS)
         for video_path in video_paths:
             print(f"Processing video {video_path}")
-            if (
-                self.video_service.get_video_duration(video_path)
-                > self.config.video_length * 60
+            if self.video_service.get_video_duration(video_path) > (
+                self.config.video_length * 60 + 1
             ):
                 print("Video is too long to process, skipping")
                 continue
@@ -144,7 +150,7 @@ class Main:
             print(f"Error recognizing speech: {e}")
             return False
         for segment in data.segments:
-            translated_text = self.translate_service.argostranslate(
+            translated_text = self.translate_service.translate(
                 text=segment.text,
                 from_code=self.config.from_code,
                 to_code=self.config.to_code,

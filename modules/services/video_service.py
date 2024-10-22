@@ -42,4 +42,4 @@ class VideoService(metaclass=Singleton):
 
     def get_video_duration(self, video_path: str):
         video = mp.VideoFileClip(video_path)
-        return video.duration
+        return video.duration # in seconds
