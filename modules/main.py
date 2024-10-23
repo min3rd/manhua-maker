@@ -23,6 +23,7 @@ FILE_PATH_CONFIG = "config.json"
 DATA_FOLDERS = [FOLDER_PATH_AUDIOS, FOLDER_PATH_JSON]
 COMPLETED_FOLDER = [FOLDER_PATH_DONE, FOLDER_PATH_EXPORT]
 MENU_TRANSLATE_VIDEO = "Translate video"
+MENU_TRANSLATE_ALL_VIDEO = "Translate all video"
 MENU_SPLIT_VIDEO = "Split video"
 MENU_UPLOAD = "Upload"
 MENU_SETTINGS = "Settings"
@@ -34,6 +35,8 @@ class Config:
     to_code: str = "en"
     video_length: int = 10
     speech_rate: int = 175
+    done: list[str] = []
+    translator_engine: str = "deep_translator"
 
     def __init__(
         self,
@@ -41,11 +44,15 @@ class Config:
         to_code: str,
         video_length: int,
         speech_rate: float,
+        done: list[str] = [],
+        translator_engine: str = "deep_translator",
     ):
         self.from_code = from_code
         self.to_code = to_code
         self.video_length = video_length
         self.speech_rate = speech_rate
+        self.done = done
+        self.translator_engine = translator_engine
 
 
 class Main:
@@ -72,7 +79,7 @@ class Main:
 
     def run(self):
         answer = self.menu_main()
-        if MENU_TRANSLATE_VIDEO == answer["menu"]:
+        if MENU_TRANSLATE_ALL_VIDEO == answer["menu"]:
             self.make_all_video(self.config.from_code, self.config.to_code)
         if MENU_SPLIT_VIDEO == answer["menu"]:
             self.split_video(self.config.video_length)
@@ -85,6 +92,8 @@ class Main:
         if MENU_EXIT == answer["menu"]:
             print("Exiting")
             return
+        if MENU_TRANSLATE_VIDEO == answer["menu"]:
+            self.translate_video()
         self.run()
 
     def menu(self, choices=list[str]) -> str:
@@ -100,7 +109,13 @@ class Main:
 
     def menu_main(self):
         return self.menu(
-            [MENU_TRANSLATE_VIDEO, MENU_SPLIT_VIDEO, MENU_SETTINGS, MENU_EXIT]
+            [
+                MENU_TRANSLATE_VIDEO,
+                MENU_TRANSLATE_ALL_VIDEO,
+                MENU_SPLIT_VIDEO,
+                MENU_SETTINGS,
+                MENU_EXIT,
+            ]
         )
 
     def menu_upload(self, video_paths: list[str]):
@@ -122,6 +137,9 @@ class Main:
         video_paths = self.file_service.find_all_videos(FOLDER_PATH_VIDEOS)
         for video_path in video_paths:
             print(f"Processing video {video_path}")
+            if self.config.done and video_path in self.config.done:
+                print("Video already processed, skipping")
+                continue
             if self.video_service.get_video_duration(video_path) > (
                 self.config.video_length * 60 + 1
             ):
@@ -151,6 +169,7 @@ class Main:
             return False
         for segment in data.segments:
             translated_text = self.translate_service.translate(
+                translator_engine=self.config.translator_engine,
                 text=segment.text,
                 from_code=self.config.from_code,
                 to_code=self.config.to_code,
@@ -159,7 +178,10 @@ class Main:
                 translated_text = segment.text
             segment_audio_path = f"{FOLDER_PATH_AUDIOS}/{segment.id}.mp3"
             self.tts_service.to_file(
-                translated_text, segment_audio_path, lang=to_code, speech_rate=175
+                translated_text,
+                segment_audio_path,
+                lang=to_code,
+                speech_rate=self.config.speech_rate,
             )
             segment.audio_path = segment_audio_path
             segment.translated_text = translated_text
@@ -175,10 +197,11 @@ class Main:
         if self.audio_service.composite(
             video_path, audio_path, data.segments, final_audio_path, word_limit=10
         ):
-            sleep(10)
-            self.file_service.copy(
-                video_path, f"{FOLDER_PATH_DONE}/{file_name_without_extension}.mp4"
-            )
+            self.save_video_state(video_path)
+            # sleep(10)
+            # self.file_service.copy(
+            #     video_path, f"{FOLDER_PATH_DONE}/{file_name_without_extension}.mp4"
+            # )
         return True
 
     def upload(self):
@@ -186,6 +209,7 @@ class Main:
             self.youtube = self.youtube_service.authenticate_youtube()
 
     def settings(self):
+        old_done = self.config.done
         self.config = inquirer.prompt(
             [
                 inquirer.List(
@@ -206,10 +230,16 @@ class Main:
                 inquirer.List(
                     "speech_rate",
                     message="Enter the speech rate",
-                    choices=[150, 175, 200],
+                    choices=[125, 150, 175, 200],
+                ),
+                inquirer.List(
+                    "translator_engine",
+                    message="Enter the translator engine",
+                    choices=["deep_translator", "argostranslate", "translate"],
                 ),
             ]
         )
+        self.config.done = old_done
         self.json_service.to_file(self.config, FILE_PATH_CONFIG)
 
     def split_video(self, video_length: int = None):
@@ -219,3 +249,28 @@ class Main:
         for video_path in video_paths:
             print(f"Processing video {video_path}")
             self.video_service.split_video(video_path, self.config.video_length)
+
+    def save_video_state(self, video_path: str):
+        self.config.done.append(video_path)
+        self.json_service.to_file(self.config, FILE_PATH_CONFIG)
+
+    def reset_video_state(self):
+        self.config.done = []
+        self.json_service.to_file(self.config, FILE_PATH_CONFIG)
+
+    def save_config(self):
+        self.json_service.to_file(self.config, FILE_PATH_CONFIG)
+
+    def translate_video(self):
+        video_paths = self.file_service.find_all_videos(FOLDER_PATH_VIDEOS)
+        answer = inquirer.prompt(
+            [
+                inquirer.List(
+                    "video_path",
+                    message="Select the video you want to translate",
+                    choices=video_paths,
+                ),
+            ]
+        )
+        video_path = answer["video_path"]
+        self.make_video(video_path, self.config.from_code, self.config.to_code)

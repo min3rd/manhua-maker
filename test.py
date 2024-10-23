@@ -20,7 +20,7 @@ data: SpeechRecognitionResult = json.loads(
 
 for segment in data.segments:
     print(f"Translating segment {segment.id}")
-    translated_text = translate_service.argostranslate(
+    translated_text = translate_service.argos_translate(
         text=segment.text, from_code=from_code, to_code=to_code
     )
     if not translated_text or len(translated_text) <= 0:
