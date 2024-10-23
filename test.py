@@ -28,7 +28,7 @@ for segment in data.segments:
         continue
     print(f"Saving audio for segment {segment.id} with text: {translated_text}")
     segment_audio_path = f"audios/{segment.id}.mp3"
-    tts_service.to_file(translated_text, segment_audio_path, lang=to_code)
+    tts_service.pyttsx3_to_file(translated_text, segment_audio_path, lang=to_code)
     segment.audio_path = segment_audio_path
     segment.translated_text = translated_text
 try:

@@ -148,6 +148,8 @@ class Main:
             self.make_video(video_path, self.config.from_code, self.config.to_code)
 
     def make_video(self, video_path: str, from_code: str = None, to_code: str = None):
+        shutil.rmtree(FOLDER_PATH_AUDIOS, ignore_errors=True)
+        os.makedirs(FOLDER_PATH_AUDIOS, exist_ok=True)
         if from_code is not None:
             self.config.from_code = from_code
         if to_code is not None:
@@ -177,7 +179,7 @@ class Main:
             if not translated_text or len(translated_text) <= 0:
                 translated_text = segment.text
             segment_audio_path = f"{FOLDER_PATH_AUDIOS}/{segment.id}.mp3"
-            self.tts_service.to_file(
+            self.tts_service.pyttsx3_to_file(
                 translated_text,
                 segment_audio_path,
                 lang=to_code,
@@ -231,7 +233,7 @@ class Main:
                     "speech_rate",
                     message="Enter the speech rate",
                     choices=[125, 150, 175, 200],
-                ),
+                ), 
                 inquirer.List(
                     "translator_engine",
                     message="Enter the translator engine",
