@@ -14,7 +14,7 @@ class TTSService(metaclass=Singleton):
     ) -> bool:
         try:
             if not self.engine:
-                self.init()
+                self.init(speech_rate=speech_rate)
             self.engine.setProperty("rate", speech_rate)
             self.engine.save_to_file(text, file_path)
             self.engine.runAndWait()
@@ -23,9 +23,9 @@ class TTSService(metaclass=Singleton):
             print(f"Error: {e}")
             return False
 
-    def init(self):
+    def init(self, speech_rate: int = 225):
         self.engine = pyttsx3.init()
-        self.engine.setProperty("rate", 225)
+        self.engine.setProperty("rate", speech_rate)
         voices = self.engine.getProperty("voices")
         for voice in voices:
             if f"{voice.name}".find("Zira") != -1:
