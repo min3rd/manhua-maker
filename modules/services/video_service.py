@@ -38,7 +38,9 @@ class VideoService(metaclass=Singleton):
                 if end + split_video_duration / 2 > duration:
                     end = duration
                 clip = video.subclip(current_position, end)
-                clip.write_videofile(f"{folder_path}/{filename}_{ep_number}.mp4")
+                clip.write_videofile(
+                    f"{folder_path}/" + "{:03}".format(ep_number) + f"_{filename}.mp4"
+                )
                 ep_number += 1
                 current_position += split_video_duration
             except Exception as e:
