@@ -8,3 +8,9 @@ done
 *.argosmodel
 *TEMP*
 *.json
+*.mp3
+*.mp4
+datasets
+*.gz
+keras
+backup

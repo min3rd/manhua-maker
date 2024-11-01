@@ -21,25 +21,29 @@ class VideoService(metaclass=Singleton):
 
     def split_video(self, video_path: str, limit: int = 10):
         print(f"Splitting video {video_path}")
-        video_duration = limit * 60  # limit in minutes to seconds
+        split_video_duration = limit * 60  # limit in minutes to seconds
         video = mp.VideoFileClip(video_path)
         duration = video.duration
-        if duration < video_duration:
+        if duration < split_video_duration:
             return
         filename = self.file_service.get_file_name_without_extension(video_path)
         folder_path = self.file_service.get_folder_path(video_path)
         ep_number = 1
-        for i in range(0, int(duration), video_duration):
+        current_position = 0
+        while current_position < duration:
             try:
-                end = i + video_duration
+                end = current_position + split_video_duration
                 if end > duration:
                     end = duration
-                clip = video.subclip(i, i + video_duration)
+                if end + split_video_duration / 2 > duration:
+                    end = duration
+                clip = video.subclip(current_position, end)
                 clip.write_videofile(f"{folder_path}/{filename}_{ep_number}.mp4")
                 ep_number += 1
+                current_position += split_video_duration
             except Exception as e:
                 print(f"Error splitting video: {e}")
 
     def get_video_duration(self, video_path: str):
         video = mp.VideoFileClip(video_path)
-        return video.duration # in seconds
+        return video.duration  # in seconds

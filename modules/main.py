@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-from time import sleep
 from modules.services.audio_service import AudioService
 from modules.services.file_service import FileService
 from modules.services.json_service import JsonService
@@ -12,22 +11,30 @@ from modules.services.video_service import VideoService
 from modules.services.word_service import WordService
 import inquirer
 
-from modules.services.youtube_service import YoutubeService
-
 FOLDER_PATH_AUDIOS = "audios"
 FOLDER_PATH_JSON = "json"
 FOLDER_PATH_DONE = "done"
 FOLDER_PATH_EXPORT = "export"
 FOLDER_PATH_VIDEOS = "videos"
+FOLDER_PATH_BACKUP = "backup"
+FOLDER_PATH_BACKUP_EXPORT = FOLDER_PATH_BACKUP + "/0." + FOLDER_PATH_EXPORT
 FILE_PATH_CONFIG = "config.json"
 DATA_FOLDERS = [FOLDER_PATH_AUDIOS, FOLDER_PATH_JSON]
-COMPLETED_FOLDER = [FOLDER_PATH_DONE, FOLDER_PATH_EXPORT]
+COMPLETED_FOLDER = [
+    FOLDER_PATH_DONE,
+    FOLDER_PATH_EXPORT,
+    FOLDER_PATH_BACKUP,
+    FOLDER_PATH_BACKUP_EXPORT,
+]
 MENU_TRANSLATE_VIDEO = "Translate video"
 MENU_TRANSLATE_ALL_VIDEO = "Translate all video"
 MENU_SPLIT_VIDEO = "Split video"
 MENU_UPLOAD = "Upload"
 MENU_SETTINGS = "Settings"
 MENU_EXIT = "Exit"
+MENU_BACKUP = "Backup"
+MENU_OPEN_VIDEOS_FOLDER = "Open videos folder"
+MENU_OPEN_EXPORT_FOLDER = "Open export folder"
 
 
 class Config:
@@ -65,8 +72,6 @@ class Main:
     file_service = FileService()
     audio_service = AudioService()
     json_service = JsonService()
-    youtube_service = YoutubeService()
-    youtube = None
 
     def __init__(self):
         try:
@@ -94,6 +99,12 @@ class Main:
             return
         if MENU_TRANSLATE_VIDEO == answer["menu"]:
             self.translate_video()
+        if MENU_BACKUP == answer["menu"]:
+            self.backup()
+        if MENU_OPEN_VIDEOS_FOLDER == answer["menu"]:
+            self.open_videos_folder()
+        if MENU_OPEN_EXPORT_FOLDER == answer["menu"]:
+            self.open_export_folder()
         self.run()
 
     def menu(self, choices=list[str]) -> str:
@@ -113,6 +124,9 @@ class Main:
                 MENU_TRANSLATE_VIDEO,
                 MENU_TRANSLATE_ALL_VIDEO,
                 MENU_SPLIT_VIDEO,
+                MENU_OPEN_VIDEOS_FOLDER,
+                MENU_OPEN_EXPORT_FOLDER,
+                MENU_BACKUP,
                 MENU_SETTINGS,
                 MENU_EXIT,
             ]
@@ -207,12 +221,11 @@ class Main:
         return True
 
     def upload(self):
-        if not self.youtube:
-            self.youtube = self.youtube_service.authenticate_youtube()
+        pass
 
     def settings(self):
         old_done = self.config.done
-        self.config = inquirer.prompt(
+        answers = inquirer.prompt(
             [
                 inquirer.List(
                     "from_code",
@@ -233,7 +246,7 @@ class Main:
                     "speech_rate",
                     message="Enter the speech rate",
                     choices=[125, 150, 175, 200],
-                ), 
+                ),
                 inquirer.List(
                     "translator_engine",
                     message="Enter the translator engine",
@@ -241,6 +254,11 @@ class Main:
                 ),
             ]
         )
+        self.config.from_code = answers["from_code"]
+        self.config.to_code = answers["to_code"]
+        self.config.video_length = answers["video_length"]
+        self.config.speech_rate = answers["speech_rate"]
+        self.config.translator_engine = answers["translator_engine"]
         self.config.done = old_done
         self.json_service.to_file(self.config, FILE_PATH_CONFIG)
 
@@ -276,3 +294,15 @@ class Main:
         )
         video_path = answer["video_path"]
         self.make_video(video_path, self.config.from_code, self.config.to_code)
+
+    def backup(self):
+        self.file_service.move(FOLDER_PATH_VIDEOS, FOLDER_PATH_BACKUP)
+        self.file_service.move(FOLDER_PATH_EXPORT, FOLDER_PATH_BACKUP_EXPORT)
+        os.makedirs(FOLDER_PATH_VIDEOS, exist_ok=True)
+        os.makedirs(FOLDER_PATH_EXPORT, exist_ok=True)
+
+    def open_videos_folder(self):
+        self.file_service.open_folder(FOLDER_PATH_VIDEOS)
+
+    def open_export_folder(self):
+        self.file_service.open_folder(FOLDER_PATH_EXPORT)

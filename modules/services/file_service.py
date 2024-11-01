@@ -44,3 +44,6 @@ class FileService(metaclass=Singleton):
 
     def get_folder_path(self, file_path: str) -> str:
         return os.path.dirname(file_path)
+
+    def open_folder(self, path: str):
+        os.startfile(path)
