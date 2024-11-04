@@ -26,9 +26,19 @@ class FileService(metaclass=Singleton):
     def get_file_name_without_extension(self, file_path: str) -> str:
         return os.path.splitext(os.path.basename(file_path))[0]
 
-    def move(self, src: str, dst: str):
+    def rename(self, src: str, dst: str):
         try:
             os.rename(src, dst)
+            return True
+        except Exception as e:
+            print(f"Error moving file: {e}")
+            return False
+
+    def move(self, src: str, dst: str):
+        try:
+            file_names = os.listdir(src)
+            for file_name in file_names:
+                shutil.move(os.path.join(src, file_name), dst)
             return True
         except Exception as e:
             print(f"Error moving file: {e}")
