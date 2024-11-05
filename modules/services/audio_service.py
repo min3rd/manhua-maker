@@ -5,6 +5,7 @@ import moviepy.audio.fx.all as afx
 import moviepy.video.fx.all as vfx
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.config import change_settings
+from modules.services.video_service import VideoService
 
 change_settings(
     {"IMAGEMAGICK_BINARY": r"libs/ImageMagick-7.1.1-39-portable-Q16-x64/magick.exe"}
@@ -12,8 +13,7 @@ change_settings(
 
 
 class AudioService(metaclass=Singleton):
-    def __init__(self):
-        pass
+    video_service = VideoService()
 
     def composite(
         self,
@@ -23,6 +23,9 @@ class AudioService(metaclass=Singleton):
         output_path: str,
         word_limit: int = 5,
         background_volume: float = 0.1,
+        video_zoom_factor: float = 1.0,
+        width: int = 1920,
+        height: int = 1080,
     ):
         try:
             print("Concatenating audios")
@@ -39,7 +42,11 @@ class AudioService(metaclass=Singleton):
                         no_translate_audio = background_audio.subclip(
                             last_end, segment.start
                         )
-                        video_clips.append(video.subclip(last_end, segment.start))
+                        raw_clip = video.subclip(last_end, segment.start)
+                        raw_clip = self.video_service.zoom_in_center(
+                            raw_clip, video_zoom_factor, width=width, height=height
+                        )
+                        video_clips.append(raw_clip)
                         audio_clips.append(no_translate_audio)
                     segment_audio = mp.AudioFileClip(segment.audio_path)
                     background_audio_clip = background_audio.subclip(
@@ -81,13 +88,20 @@ class AudioService(metaclass=Singleton):
                     video_speed = real_duration / audio_duration
                     video_clip = video.subclip(segment.start, segment.end)
                     video_clip = video_clip.fx(vfx.speedx, video_speed)
+                    video_clip = self.video_service.zoom_in_center(
+                        video_clip, video_zoom_factor, width=width, height=height
+                    )
                     video_clips.append(video_clip)
                 except Exception as e:
                     print(f"Error processing segment {segment.id}: {e}")
                     no_translate_audio = background_audio.subclip(
                         last_end, segment.start
                     )
-                    video_clips.append(video.subclip(last_end, segment.start))
+                    raw_clip = video.subclip(last_end, segment.start)
+                    raw_clip = self.video_service.zoom_in_center(
+                        raw_clip, video_zoom_factor, width=width, height=height
+                    )
+                    video_clips.append(raw_clip)
                     audio_clips.append(no_translate_audio)
                 last_end = segment.end
             video = mp.concatenate_videoclips(video_clips)

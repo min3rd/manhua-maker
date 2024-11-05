@@ -10,3 +10,4 @@ gTTS
 translate
 pyttsx3
 deep-translator
+Pillow<10.0.0

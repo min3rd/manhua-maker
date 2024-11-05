@@ -1,5 +1,6 @@
 from modules.core.singleton import Singleton
 import pyttsx3
+from gtts import gTTS
 
 
 class TTSService(metaclass=Singleton):
@@ -8,6 +9,36 @@ class TTSService(metaclass=Singleton):
 
     def __init__(self):
         self.init()
+
+    def to_file(
+        self,
+        engine: str,
+        text: str,
+        file_path: str,
+        lang: str = "en",
+        tld: str = "com",
+        speech_rate: int = 225,
+    ) -> bool:
+        if engine == "gtts":
+            return self.gtts_to_file(text, file_path, lang, tld)
+        if engine == "pyttsx3":
+            return self.pyttsx3_to_file(text, file_path, lang, speech_rate)
+
+    def gtts_to_file(
+        self,
+        text: str,
+        file_path: str,
+        lang: str = "en",
+        tld: str = "com",
+    ) -> bool:
+        try:
+
+            tts = gTTS(text=text, lang=lang, tld=tld, slow=False)
+            tts.save(file_path)
+            return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
 
     def pyttsx3_to_file(
         self, text: str, file_path: str, lang: str = "en", speech_rate: int = 225

@@ -1,5 +1,5 @@
 import moviepy.editor as mp
-
+from moviepy.video.VideoClip import VideoClip
 from modules.core.singleton import Singleton
 from modules.services.file_service import FileService
 
@@ -49,3 +49,42 @@ class VideoService(metaclass=Singleton):
     def get_video_duration(self, video_path: str):
         video = mp.VideoFileClip(video_path)
         return video.duration  # in seconds
+
+    def zoom_in_center(
+        self,
+        clip: VideoClip,
+        scale_factor: float,
+        width: float = None,
+        height: float = None,
+        output_path: str = None,
+    ):
+        resize_width = clip.w * scale_factor
+        resize_height = clip.h * scale_factor
+        zoomed_clip = self.crop_video_center(clip, resize_width, resize_height)
+        if width is None and height is None:
+            width = clip.w
+            height = clip.h
+        resize = self.resize_video(zoomed_clip, width=width, height=height)
+        if output_path:
+            resize.write_videofile(output_path, codec="libx264")
+        return resize
+
+    def crop_video_center(
+        self, clip: VideoClip, width, height, output_path: str = None
+    ):
+        x_center = (clip.w - width) / 2
+        y_center = (clip.h - height) / 2
+        cropped_clip = clip.crop(
+            x_center, y_center, x_center + width, y_center + height
+        )
+        if output_path:
+            cropped_clip.write_videofile(output_path, codec="libx264")
+        return cropped_clip
+
+    def resize_video(
+        self, clip: VideoClip, width: int, height: int, output_path: str = None
+    ):
+        resized_clip = clip.fx(mp.vfx.resize, width=width, height=height)
+        if output_path:
+            resized_clip.write_videofile(output_path, codec="libx264")
+        return resized_clip
